@@ -233,7 +233,13 @@ def run_uninstaller():
     # 6. Spawn self-deletion batch script in the temp directory and exit
     try:
         exe_path = sys.executable
-        install_dir = os.path.dirname(exe_path)
+        if getattr(sys, 'frozen', False):
+            install_dir = os.path.dirname(exe_path)
+            exe_to_check = exe_path
+        else:
+            install_dir = os.path.dirname(os.path.abspath(__file__))
+            exe_to_check = os.path.join(install_dir, "main.py")
+        
         temp_dir = tempfile.gettempdir()
         bat_path = os.path.join(temp_dir, "pingbro_cleanup.bat")
         
@@ -245,8 +251,8 @@ def run_uninstaller():
 :loop
 taskkill /F /IM PingBro.exe >nul 2>&1
 powershell -Command "Get-CimInstance Win32_Process -Filter 'CommandLine LIKE ''%%%%main.py%%%%'' AND Name <> ''powershell.exe''' | Invoke-CimMethod -MethodName Terminate" >nul 2>&1
-del "{exe_path}" >nul 2>&1
-if exist "{exe_path}" (
+del /F /Q "{exe_to_check}" >nul 2>&1
+if exist "{exe_to_check}" (
     timeout /t 1 /nobreak >nul
     goto loop
 )

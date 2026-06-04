@@ -115,23 +115,65 @@ class SetupWizard(ctk.CTk):
 
             os.makedirs(self.install_dir, exist_ok=True)
 
-            # Determine where PingBro.exe is packaged in temp folder
-            source_exe = os.path.join(getattr(sys, '_MEIPASS', '.'), 'PingBro.exe')
+            if getattr(sys, 'frozen', False):
+                # Determine where PingBro.exe is packaged in temp folder
+                source_exe = os.path.join(getattr(sys, '_MEIPASS', '.'), 'PingBro.exe')
 
-            if not os.path.exists(source_exe):
-                # Fallback to current folder if setup runs uncompiled
-                source_exe = "PingBro.exe"
+                if not os.path.exists(source_exe):
+                    # Fallback to current folder if setup runs uncompiled
+                    source_exe = "PingBro.exe"
 
-            if not os.path.exists(source_exe):
-                raise FileNotFoundError("Could not find packaged PingBro.exe resource.")
+                if not os.path.exists(source_exe):
+                    raise FileNotFoundError("Could not find packaged PingBro.exe resource.")
 
-            # Stop any running processes to prevent file locking
-            try:
-                subprocess.run(["taskkill", "/F", "/IM", "PingBro.exe"], capture_output=True)
-            except Exception:
-                pass
+                # Stop any running processes to prevent file locking
+                try:
+                    subprocess.run(["taskkill", "/F", "/IM", "PingBro.exe"], capture_output=True)
+                except Exception:
+                    pass
 
-            shutil.copy2(source_exe, self.target_exe)
+                shutil.copy2(source_exe, self.target_exe)
+            else:
+                # source mode: copy folders and files
+                source_dir = os.path.dirname(os.path.abspath(__file__))
+                
+                # Stop any running processes to prevent file locking
+                try:
+                    subprocess.run(["taskkill", "/F", "/IM", "PingBro.exe"], capture_output=True)
+                except Exception:
+                    pass
+                try:
+                    powershell_cmd = f"Get-CimInstance Win32_Process -Filter 'CommandLine LIKE ''%%main.py%%%%'' AND ProcessId <> {os.getpid()}' | Invoke-CimMethod -MethodName Terminate"
+                    subprocess.run(["powershell", "-Command", powershell_cmd], capture_output=True)
+                except Exception:
+                    pass
+
+                folders_to_copy = ["config", "services", "ui", "utils", "reminders", "assets", ".venv"]
+                files_to_copy = ["main.py"]
+                
+                # Copy directories
+                for i, folder in enumerate(folders_to_copy):
+                    src_folder = os.path.join(source_dir, folder)
+                    if os.path.exists(src_folder):
+                        dst_folder = os.path.join(self.install_dir, folder)
+                        self.status_lbl.configure(text=f"Copying {folder} folder ({i+1}/{len(folders_to_copy)})...")
+                        self.prog_bar.set(0.2 + (i / len(folders_to_copy)) * 0.25)
+                        self.update_idletasks()
+                        if os.path.exists(dst_folder):
+                            try:
+                                shutil.rmtree(dst_folder)
+                            except Exception:
+                                pass
+                        shutil.copytree(src_folder, dst_folder)
+                
+                # Copy files
+                for file in files_to_copy:
+                    src_file = os.path.join(source_dir, file)
+                    if os.path.exists(src_file):
+                        self.status_lbl.configure(text=f"Copying {file}...")
+                        self.update_idletasks()
+                        shutil.copy2(src_file, os.path.join(self.install_dir, file))
+
             self.after(500, lambda: self.step_create_shortcut())
         except Exception as e:
             self.show_error_screen(f"Failed to copy application files: {e}")
@@ -141,16 +183,30 @@ class SetupWizard(ctk.CTk):
             self.status_lbl.configure(text="Creating Start Menu shortcut...")
             self.prog_bar.set(0.5)
 
-            # Use PowerShell to create the shortcut file (no win32com dependencies needed)
-            powershell_cmd = f"""
-            $w = New-Object -ComObject WScript.Shell
-            $s = $w.CreateShortcut("{self.shortcut_path}")
-            $s.TargetPath = "{self.target_exe}"
-            $s.Description = "PingBro Reminder App"
-            $s.WorkingDirectory = "{self.install_dir}"
-            $s.IconLocation = "{self.target_exe},0"
-            $s.Save()
-            """
+            if getattr(sys, 'frozen', False):
+                powershell_cmd = f"""
+                $w = New-Object -ComObject WScript.Shell
+                $s = $w.CreateShortcut("{self.shortcut_path}")
+                $s.TargetPath = "{self.target_exe}"
+                $s.Description = "PingBro Reminder App"
+                $s.WorkingDirectory = "{self.install_dir}"
+                $s.IconLocation = "{self.target_exe},0"
+                $s.Save()
+                """
+            else:
+                pythonw_exe = os.path.join(self.install_dir, ".venv", "Scripts", "pythonw.exe")
+                main_py = os.path.join(self.install_dir, "main.py")
+                icon_ico = os.path.join(self.install_dir, "assets", "icon.ico")
+                powershell_cmd = f"""
+                $w = New-Object -ComObject WScript.Shell
+                $s = $w.CreateShortcut("{self.shortcut_path}")
+                $s.TargetPath = "{pythonw_exe}"
+                $s.Arguments = '"{main_py}"'
+                $s.Description = "PingBro Reminder App"
+                $s.WorkingDirectory = "{self.install_dir}"
+                $s.IconLocation = "{icon_ico}"
+                $s.Save()
+                """
             subprocess.run(["powershell", "-Command", powershell_cmd], capture_output=True, text=True, check=True)
 
             self.after(500, lambda: self.step_register_uninstall())
@@ -162,6 +218,21 @@ class SetupWizard(ctk.CTk):
             self.status_lbl.configure(text="Registering app in Windows Settings...")
             self.prog_bar.set(0.8)
 
+            if getattr(sys, 'frozen', False):
+                uninstall_string = f'"{self.target_exe}" --uninstall'
+                startup_cmd = f'"{self.target_exe}"'
+                display_icon = f'"{self.target_exe}",0'
+                launch_cmd = [self.target_exe]
+            else:
+                python_exe = os.path.join(self.install_dir, ".venv", "Scripts", "python.exe")
+                pythonw_exe = os.path.join(self.install_dir, ".venv", "Scripts", "pythonw.exe")
+                main_py = os.path.join(self.install_dir, "main.py")
+                icon_ico = os.path.join(self.install_dir, "assets", "icon.ico")
+                uninstall_string = f'"{python_exe}" "{main_py}" --uninstall'
+                startup_cmd = f'"{pythonw_exe}" "{main_py}"'
+                display_icon = icon_ico
+                launch_cmd = [pythonw_exe, main_py]
+
             # 1. Register in HKEY_CURRENT_USER for Uninstall (Installed apps list)
             key_path = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\PingBro"
             key = winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_ALL_ACCESS)
@@ -169,22 +240,23 @@ class SetupWizard(ctk.CTk):
             winreg.SetValueEx(key, "DisplayName", 0, winreg.REG_SZ, "PingBro")
             winreg.SetValueEx(key, "DisplayVersion", 0, winreg.REG_SZ, "1.0.0")
             winreg.SetValueEx(key, "Publisher", 0, winreg.REG_SZ, "PingBro")
-            winreg.SetValueEx(key, "DisplayIcon", 0, winreg.REG_SZ, f'"{self.target_exe}",0')
-            winreg.SetValueEx(key, "UninstallString", 0, winreg.REG_SZ, f'"{self.target_exe}" --uninstall')
+            winreg.SetValueEx(key, "DisplayIcon", 0, winreg.REG_SZ, display_icon)
+            winreg.SetValueEx(key, "UninstallString", 0, winreg.REG_SZ, uninstall_string)
             winreg.SetValueEx(key, "InstallLocation", 0, winreg.REG_SZ, self.install_dir)
             winreg.CloseKey(key)
 
             # 2. Register in Windows Startup (autostart by default)
             run_key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
             run_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, run_key_path, 0, winreg.KEY_ALL_ACCESS)
-            winreg.SetValueEx(run_key, "PingBro", 0, winreg.REG_SZ, f'"{self.target_exe}"')
+            winreg.SetValueEx(run_key, "PingBro", 0, winreg.REG_SZ, startup_cmd)
+            run_key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
             winreg.CloseKey(run_key)
 
             self.prog_bar.set(1.0)
 
             # Start the application immediately in the background
             try:
-                subprocess.Popen([self.target_exe], creationflags=0x00000008 | 0x00000010)
+                subprocess.Popen(launch_cmd, creationflags=0x00000008 | 0x00000010)
             except Exception:
                 pass
 
