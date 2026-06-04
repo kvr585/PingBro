@@ -106,6 +106,12 @@ class SingleInstanceLock:
 project_root = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, project_root)
 
+# If running via system python, inject local virtual environment site-packages
+venv_site_packages = os.path.join(project_root, ".venv", "Lib", "site-packages")
+if os.path.exists(venv_site_packages):
+    sys.path.insert(0, venv_site_packages)
+
+
 from config.settings import SettingsManager
 from services.scheduler import ReminderScheduler
 from services.tray import TrayIconService

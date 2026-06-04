@@ -194,7 +194,7 @@ class SetupWizard(ctk.CTk):
                 $s.Save()
                 """
             else:
-                pythonw_exe = os.path.join(self.install_dir, ".venv", "Scripts", "pythonw.exe")
+                pythonw_exe = os.path.join(sys.base_prefix, "pythonw.exe")
                 main_py = os.path.join(self.install_dir, "main.py")
                 icon_ico = os.path.join(self.install_dir, "assets", "icon.ico")
                 powershell_cmd = f"""
@@ -224,8 +224,8 @@ class SetupWizard(ctk.CTk):
                 display_icon = f'"{self.target_exe}",0'
                 launch_cmd = [self.target_exe]
             else:
-                python_exe = os.path.join(self.install_dir, ".venv", "Scripts", "python.exe")
-                pythonw_exe = os.path.join(self.install_dir, ".venv", "Scripts", "pythonw.exe")
+                python_exe = os.path.join(sys.base_prefix, "python.exe")
+                pythonw_exe = os.path.join(sys.base_prefix, "pythonw.exe")
                 main_py = os.path.join(self.install_dir, "main.py")
                 icon_ico = os.path.join(self.install_dir, "assets", "icon.ico")
                 uninstall_string = f'"{python_exe}" "{main_py}" --uninstall'
@@ -288,7 +288,7 @@ class SetupWizard(ctk.CTk):
         # Details
         details_lbl = ctk.CTkLabel(
             self.main_frame,
-            text="PingBro has been successfully installed, registered, and launched!\nYou can now find it running in your system tray.\n(Note: You can safely delete the downloaded setup folder now as the app is fully installed.)\nManage or uninstall it directly from your Windows Settings Apps list.",
+            text="PingBro has been successfully installed, registered, and launched!\nYou can now find it running in your system tray.\nManage or uninstall it directly from your Windows Settings Apps list.",
             font=("Helvetica", 12),
             text_color="#a0a0a5",
             justify="center"
