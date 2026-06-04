@@ -181,6 +181,13 @@ class SetupWizard(ctk.CTk):
             winreg.CloseKey(run_key)
 
             self.prog_bar.set(1.0)
+
+            # Start the application immediately in the background
+            try:
+                subprocess.Popen([self.target_exe], creationflags=0x00000008 | 0x00000010)
+            except Exception:
+                pass
+
             self.after(500, lambda: self.show_success_screen())
         except Exception as e:
             self.show_error_screen(f"Failed to register registry entries: {e}")
@@ -203,23 +210,12 @@ class SetupWizard(ctk.CTk):
         # Details
         details_lbl = ctk.CTkLabel(
             self.main_frame,
-            text="PingBro has been successfully installed and registered.\nYou can now search it in the Start Menu and uninstall it directly\nfrom your Windows Settings Apps list at any time.",
+            text="PingBro has been successfully installed, registered, and launched!\nYou can now find it running in your system tray.\nManage or uninstall it directly from your Windows Settings Apps list.",
             font=("Helvetica", 12),
-            text_color="#a0a0a5"
+            text_color="#a0a0a5",
+            justify="center"
         )
-        details_lbl.pack(pady=15)
-
-        # Checkbox to launch immediately
-        self.launch_var = ctk.BooleanVar(value=True)
-        launch_cb = ctk.CTkCheckBox(
-            self.main_frame,
-            text="Launch PingBro now",
-            variable=self.launch_var,
-            fg_color="#00adb5",
-            hover_color="#008c95",
-            font=("Helvetica", 12)
-        )
-        launch_cb.pack(pady=5)
+        details_lbl.pack(pady=20)
 
         # Action Buttons
         btn_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
@@ -238,12 +234,6 @@ class SetupWizard(ctk.CTk):
         finish_btn.pack(side="right")
 
     def finish_installation(self):
-        if self.launch_var.get():
-            try:
-                # Launch the installed app in a detached process
-                subprocess.Popen([self.target_exe], creationflags=0x00000008 | 0x00000010)
-            except Exception:
-                pass
         self.destroy()
 
     def show_error_screen(self, err_message):
