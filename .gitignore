@@ -41,6 +41,9 @@ config/*.json
 aura_reminder_android/
 *.log
 
+# Scratch scripts
+scratch/
+
 # Windows OS files
 Thumbs.db
 ehthumbs.db

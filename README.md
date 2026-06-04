@@ -35,7 +35,7 @@ A modern, sleek, dark-themed Windows desktop notification client and companion A
 
 ## 📱 Companion Android App
 
-Located in the [aura_reminder_android](file:///c:/Users/uvave/Documents/auto_flasher/aura_reminder_android) sub-directory, a Flutter companion mobile application delivers the same premium dark theme experience on Android:
+Located in the [aura_reminder_android](aura_reminder_android) sub-directory, a Flutter companion mobile application delivers the same premium dark theme experience on Android:
 - **Immersive Alarm Popups**: Rings alarm-clock alerts and displays full-screen wake-lock views over your device lock screen.
 - **Ignore Battery Optimizations**: Requests special background permissions to guarantee exact firing schedules even during Android Doze mode.
 - **Snooze Support**: Delayed rescheduling logic syncing directly with standard notifications.
@@ -116,6 +116,7 @@ PingBro/
 ├── .gitignore                  # Git commit exclusions
 ├── PingBro.spec                # PyInstaller compilation specification
 ├── create_launcher.sh          # Linux desktop menu installer script
+├── install.bat                 # Windows Setup Wizard launcher (Bypasses Smart App Control)
 ├── install.sh                  # Automated 1-click Linux installation script
 │
 ├── config/
