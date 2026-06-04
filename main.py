@@ -254,8 +254,12 @@ if exist "{exe_path}" (
             if is_safe_dir:
                 f.write(f'rmdir /S /Q "{install_dir}" >nul 2>&1\n')
             f.write('del "%~f0"\n')
-            
-        subprocess.Popen([bat_path], shell=True, creationflags=0x00000008 | 0x00000010)
+        creationflags = 0
+        if sys.platform.startswith('win'):
+            creationflags = 0x08000000  # CREATE_NO_WINDOW
+            subprocess.Popen(['cmd.exe', '/c', bat_path], creationflags=creationflags)
+        else:
+            subprocess.Popen(['/bin/sh', bat_path])
     except Exception as e:
         print(f"[Uninstall] Failed to spawn cleanup script: {e}")
 
