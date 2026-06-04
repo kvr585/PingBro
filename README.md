@@ -1,6 +1,6 @@
 # PingBro 🌌
 
-A modern, sleek, dark-themed Windows desktop notification client and companion Android app designed to keep you on track. PingBro helps you schedule custom alarms, periodic intervals (e.g. repeat every N minutes), track hydration goals (optional), and features emergency keyboard-safe instant shutdowns.
+A modern, sleek, dark-themed Windows desktop notification client designed to keep you on track. PingBro helps you schedule custom alarms, periodic intervals (e.g. repeat every N minutes), track hydration goals (optional), and features emergency keyboard-safe instant shutdowns.
 
 ---
 
@@ -33,14 +33,6 @@ A modern, sleek, dark-themed Windows desktop notification client and companion A
 
 ---
 
-## 📱 Companion Android App
-
-Located in the [aura_reminder_android](aura_reminder_android) sub-directory, a Flutter companion mobile application delivers the same premium dark theme experience on Android:
-- **Immersive Alarm Popups**: Rings alarm-clock alerts and displays full-screen wake-lock views over your device lock screen.
-- **Ignore Battery Optimizations**: Requests special background permissions to guarantee exact firing schedules even during Android Doze mode.
-- **Snooze Support**: Delayed rescheduling logic syncing directly with standard notifications.
-
----
 
 ## Installation & Running (Windows Desktop)
 
@@ -52,7 +44,7 @@ For normal users who want a standard, clean installation:
    - Right-click the downloaded ZIP file, select **Extract All...**, and extract it.
 
 2. **Run the Installer:**
-   - Open the extracted folder and double-click **`install.bat`**.
+   - Open the extracted folder and double-click **`setup.py`** (or run `python setup.py` from the command prompt).
    - Click **Install** in the wizard. This runs the installer using the system Python interpreter (which is digitally signed and trusted by Windows), bypassing all Smart App Control blocks and warnings! It will automatically install PingBro to your local apps directory (`%LOCALAPPDATA%\PingBro`), register it in Windows, create a Start Menu shortcut, and launch the application!
 
 3. **❌ Uninstall cleanly at any time:**
@@ -116,7 +108,6 @@ PingBro/
 ├── .gitignore                  # Git commit exclusions
 ├── PingBro.spec                # PyInstaller compilation specification
 ├── create_launcher.sh          # Linux desktop menu installer script
-├── install.bat                 # Windows Setup Wizard launcher (Bypasses Smart App Control)
 ├── install.sh                  # Automated 1-click Linux installation script
 │
 ├── config/
@@ -140,11 +131,9 @@ PingBro/
 │   ├── scheduler.py            # Time-keeper checker thread
 │   └── tray.py                 # pystray System Tray menu loop thread
 │
-├── utils/
-│   ├── fullscreen.py           # OS fullscreen state checker (fallback safe)
-│   ├── hotkey.py               # Hotkey listener thread (Windows only, fallback safe)
-│   ├── logger.py               # App logging engine (config/logs.json)
-│   └── sound.py                # Sound player engine (winsound / Linux players)
-│
-└── aura_reminder_android/      # Flutter companion app source code
+└── utils/
+    ├── fullscreen.py           # OS fullscreen state checker (fallback safe)
+    ├── hotkey.py               # Hotkey listener thread (Windows only, fallback safe)
+    ├── logger.py               # App logging engine (config/logs.json)
+    └── sound.py                # Sound player engine (winsound / Linux players)
 ```
