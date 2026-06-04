@@ -45,3 +45,7 @@ aura_reminder_android/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# Compiled Binaries (Exclude main executable from git tracking to save space, Setup Wizard is enough)
+PingBro.exe
+
