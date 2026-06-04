@@ -13,35 +13,36 @@ class SingleInstanceLock:
         self.thread = None
         self.running = False
         self.mutex = None
+        self.lock_file = None
 
     def acquire(self):
+        # 1. Platform-specific singleton check (Mutex on Windows, fcntl lock file on Linux)
         if sys.platform.startswith('win'):
             try:
                 import ctypes
-                # Use a unique name for the system-wide mutex
                 self.mutex = ctypes.windll.kernel32.CreateMutexW(None, False, "PingBro_Singleton_Mutex")
                 last_error = ctypes.windll.kernel32.GetLastError()
                 if last_error == 183:  # ERROR_ALREADY_EXISTS
-                    # Another instance is running. Try clean socket notification first.
-                    socket_notified = False
-                    try:
-                        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                        s.settimeout(0.5)
-                        s.connect(('127.0.0.1', self.port))
-                        s.sendall(b"restore")
-                        s.close()
-                        socket_notified = True
-                    except Exception:
-                        pass
-                    
-                    # If socket communication is blocked/failed, force restoration via Win32 API
-                    if not socket_notified:
-                        self.restore_existing_window_win32()
+                    self.notify_and_restore_existing()
                     return False
             except Exception as e:
                 print(f"[Lock] Failed to acquire Win32 mutex: {e}. Falling back to socket lock.")
+        else:
+            # Linux fallback using fcntl lock file
+            try:
+                import fcntl
+                lock_path = os.path.join(os.path.expanduser("~"), ".pingbro.lock")
+                self.lock_file = open(lock_path, 'w')
+                try:
+                    fcntl.lockf(self.lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except (IOError, OSError):
+                    # Lock is already held by another instance
+                    self.notify_and_restore_existing()
+                    return False
+            except Exception as e:
+                print(f"[Lock] Failed to acquire fcntl lock file: {e}. Falling back to socket lock.")
 
-        # Both Windows (first instance) and Linux should start the socket listener
+        # 2. Both Windows (first instance) and Linux should start the socket listener for restoration signals
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -53,18 +54,30 @@ class SingleInstanceLock:
             self.thread.start()
             return True
         except OSError:
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.settimeout(1.0)
-                s.connect(('127.0.0.1', self.port))
-                s.sendall(b"restore")
-                s.close()
-            except Exception:
-                pass
+            # Fallback if binding fails (e.g. port is already in use by another program)
+            self.notify_and_restore_existing()
             return False
 
     def register_window(self, window):
         self.window = window
+
+    def notify_and_restore_existing(self):
+        """Attempts to notify the running instance to restore, and on Windows falls back to Win32 restoration."""
+        # Try clean socket notification first
+        socket_notified = False
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(0.5)
+            s.connect(('127.0.0.1', self.port))
+            s.sendall(b"restore")
+            s.close()
+            socket_notified = True
+        except Exception:
+            pass
+        
+        # On Windows, if socket fails/is blocked, force restore using FindWindowW API
+        if not socket_notified and sys.platform.startswith('win'):
+            self.restore_existing_window_win32()
 
     def restore_existing_window_win32(self):
         try:
