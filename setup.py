@@ -53,6 +53,13 @@ def bootstrap():
 bootstrap()
 import customtkinter as ctk
 
+def get_powershell_exe():
+    system_root = os.environ.get("SystemRoot", "C:\\Windows")
+    powershell_exe = os.path.join(system_root, "System32", "WindowsPowerShell", "v1.0", "powershell.exe")
+    if os.path.exists(powershell_exe):
+        return powershell_exe
+    return "powershell"
+
 class SetupWizard(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -192,7 +199,7 @@ class SetupWizard(ctk.CTk):
                     pass
                 try:
                     powershell_cmd = f"Get-CimInstance Win32_Process -Filter 'CommandLine LIKE ''%%main.py%%%%'' AND ProcessId <> {os.getpid()}' | Invoke-CimMethod -MethodName Terminate"
-                    subprocess.run(["powershell", "-Command", powershell_cmd], capture_output=True)
+                    subprocess.run([get_powershell_exe(), "-Command", powershell_cmd], capture_output=True)
                 except Exception:
                     pass
 
@@ -255,7 +262,7 @@ class SetupWizard(ctk.CTk):
                 $s.IconLocation = "{icon_ico}"
                 $s.Save()
                 """
-            subprocess.run(["powershell", "-Command", powershell_cmd], capture_output=True, text=True, check=True)
+            subprocess.run([get_powershell_exe(), "-Command", powershell_cmd], capture_output=True, text=True, check=True)
 
             self.after(500, lambda: self.step_register_uninstall())
         except Exception as e:
