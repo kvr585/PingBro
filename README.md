@@ -4,6 +4,27 @@ A modern, sleek, dark-themed Windows desktop notification client designed to kee
 
 ---
 
+## 🎥 Application Walkthrough
+<video src="PingBro.mp4" width="100%" controls></video>
+
+*If the video player doesn't load, you can watch it here: [PingBro.mp4](PingBro.mp4)*
+
+## 📸 Screenshots
+
+### 📊 Dashboard
+![Dashboard](screenshots/Dashboard.png)
+
+### 🔔 Active Reminders
+![Active Reminders](screenshots/Active_reminders.png)
+
+### ➕ Add Reminder
+![Add Reminder](screenshots/Add_reminder.png)
+
+### ⚙️ Settings
+![Settings](screenshots/settings.png)
+
+---
+
 ## Key Desktop Features
 
 1. **✏️ Click-to-Edit Reminders**:
