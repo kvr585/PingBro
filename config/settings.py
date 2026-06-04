@@ -42,7 +42,7 @@ DEFAULT_SETTINGS = {
     ],
     
     "active_pause_end": None,  # Epoch timestamp (float) or None
-    "startup_enabled": False,
+    "startup_enabled": True,
     "silent_mode": False,
     "custom_sound_file": "",
     "fullscreen_safety_enabled": True,

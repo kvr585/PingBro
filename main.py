@@ -91,6 +91,23 @@ def main():
     # 1. Initialize Configuration
     settings = SettingsManager()
 
+    # Enable start on boot automatically by default if running on Windows and enabled
+    if sys.platform.startswith('win'):
+        if settings.get("startup_enabled", True):
+            try:
+                import winreg
+                key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
+                app_name = "PingBro"
+                if getattr(sys, 'frozen', False):
+                    cmd = f'"{sys.executable}"'
+                else:
+                    cmd = f'"{sys.executable}" "{os.path.abspath(sys.argv[0])}"'
+                key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_ALL_ACCESS)
+                winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, cmd)
+                winreg.CloseKey(key)
+            except Exception as e:
+                print(f"[Registry] Failed to auto-set registry startup key: {e}")
+
     # 2. Setup visual alert trigger callback for the scheduler
     def scheduler_ui_dispatcher(title, message, mode, priority, is_water):
         if window:
