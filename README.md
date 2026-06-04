@@ -44,7 +44,7 @@ Located in the [aura_reminder_android](file:///c:/Users/uvave/Documents/auto_fla
 
 ## Installation & Running (Windows Desktop)
 
-### 🚀 Standard Setup (Quick & User-Friendly — No Terminal Required)
+### 🚀 Standard Setup (Quick & User-Friendly — Bypasses Smart App Control)
 For normal users who want a standard, clean installation:
 
 1. **Download and Extract the App:**
@@ -52,8 +52,8 @@ For normal users who want a standard, clean installation:
    - Right-click the downloaded ZIP file, select **Extract All...**, and extract it.
 
 2. **Run the Installer:**
-   - Open the extracted folder and double-click **`PingBroSetup.exe`**.
-   - Click **Install** in the wizard. It will automatically install PingBro to your local apps directory (`%LOCALAPPDATA%\PingBro`), register it in Windows, create a Start Menu shortcut, and launch the application!
+   - Open the extracted folder and double-click **`install.bat`**.
+   - Click **Install** in the wizard. This runs the installer using the system Python interpreter (which is digitally signed and trusted by Windows), bypassing all Smart App Control blocks and warnings! It will automatically install PingBro to your local apps directory (`%LOCALAPPDATA%\PingBro`), register it in Windows, create a Start Menu shortcut, and launch the application!
 
 3. **❌ Uninstall cleanly at any time:**
    - You can uninstall PingBro like any other app: Go to **Windows Settings > Apps > Installed apps**, search for **PingBro**, and click **Uninstall**.
