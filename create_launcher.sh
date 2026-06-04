@@ -16,6 +16,7 @@ cat <<EOF > "$DESKTOP_FILE"
 Name=PingBro
 Comment=A modern dark-themed notification and reminder client
 Exec=$DIR/.venv/bin/python3 $DIR/main.py
+Path=$DIR
 Icon=$DIR/assets/icon.png
 Terminal=false
 Type=Application
@@ -24,5 +25,10 @@ EOF
 
 # Make the desktop entry executable
 chmod +x "$DESKTOP_FILE"
+
+# Update desktop database to force menu refresh
+if command -v update-desktop-database &> /dev/null; then
+    update-desktop-database "$DESKTOP_DIR"
+fi
 
 echo "PingBro application launcher successfully registered in your Applications Menu!"
