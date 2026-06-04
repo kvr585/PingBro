@@ -337,7 +337,7 @@ def _main_impl():
     # 1. Initialize Configuration
     settings = SettingsManager()
 
-    # Enable start on boot automatically by default if running on Windows and enabled
+    # Enable start on boot automatically by default if running on Windows/Linux and enabled
     if sys.platform.startswith('win'):
         startup_shortcut_path = os.path.join(
             os.environ["APPDATA"], "Microsoft", "Windows", "Start Menu", "Programs", "Startup", "PingBro.lnk"
@@ -385,6 +385,38 @@ def _main_impl():
             try:
                 if os.path.exists(startup_shortcut_path):
                     os.remove(startup_shortcut_path)
+            except Exception:
+                pass
+    elif sys.platform.startswith('linux'):
+        autostart_dir = os.path.expanduser("~/.config/autostart")
+        autostart_file = os.path.join(autostart_dir, "pingbro.desktop")
+        if settings.get("startup_enabled", True):
+            try:
+                os.makedirs(autostart_dir, exist_ok=True)
+                main_py = os.path.abspath(sys.argv[0])
+                project_dir = os.path.dirname(main_py)
+                venv_python = sys.executable
+                icon_path = os.path.join(project_dir, "assets", "icon.png")
+                
+                desktop_content = f"""[Desktop Entry]
+Name=PingBro
+Comment=A modern dark-themed notification and reminder client
+Exec={venv_python} {main_py}
+Path={project_dir}
+Icon={icon_path}
+Terminal=false
+Type=Application
+Categories=Utility;
+"""
+                with open(autostart_file, "w") as f:
+                    f.write(desktop_content)
+                os.chmod(autostart_file, 0o755)
+            except Exception as e:
+                print(f"[Startup] Failed to create autostart desktop file: {e}")
+        else:
+            try:
+                if os.path.exists(autostart_file):
+                    os.remove(autostart_file)
             except Exception:
                 pass
 

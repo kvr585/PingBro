@@ -1,5 +1,6 @@
 import os
 import sys
+import subprocess
 
 IS_WINDOWS = sys.platform.startswith('win')
 if IS_WINDOWS:
@@ -79,9 +80,10 @@ class SettingsView(ctk.CTkFrame):
         title.pack(anchor="w", padx=20, pady=(15, 10))
         
         # Startup toggle
+        startup_text = "Start application on Windows startup" if IS_WINDOWS else "Start application on system startup"
         self.startup_switch = ctk.CTkSwitch(
             card, 
-            text="Start application on Windows startup", 
+            text=startup_text, 
             font=("Helvetica", 12, "bold"),
             progress_color="#00adb5",
             command=self.toggle_startup
@@ -291,60 +293,99 @@ class SettingsView(ctk.CTkFrame):
                 self.startup_switch.deselect()
             else:
                 self.startup_switch.select()
-            messagebox.showerror("Registry Error", "Failed to update Windows registry startup entry.")
+            title = "Registry Error" if IS_WINDOWS else "Startup Error"
+            msg = "Failed to update Windows registry startup entry." if IS_WINDOWS else "Failed to update system startup entry."
+            messagebox.showerror(title, msg)
 
     def _set_windows_registry_startup(self, enabled=True):
-        """Creates or removes a shortcut in the Windows Startup folder."""
-        startup_shortcut_path = os.path.join(
-            os.environ["APPDATA"], "Microsoft", "Windows", "Start Menu", "Programs", "Startup", "PingBro.lnk"
-        )
-        if not enabled:
+        """Creates or removes a shortcut or autostart entry for system startup."""
+        if IS_WINDOWS:
+            startup_shortcut_path = os.path.join(
+                os.environ["APPDATA"], "Microsoft", "Windows", "Start Menu", "Programs", "Startup", "PingBro.lnk"
+            )
+            if not enabled:
+                try:
+                    if os.path.exists(startup_shortcut_path):
+                        os.remove(startup_shortcut_path)
+                    return True
+                except Exception as e:
+                    print(f"[Startup] Error removing startup shortcut: {e}")
+                    return False
+                    
+            system_root = os.environ.get("SystemRoot", "C:\\Windows")
+            powershell_exe = os.path.join(system_root, "System32", "WindowsPowerShell", "v1.0", "powershell.exe")
+            if not os.path.exists(powershell_exe):
+                powershell_exe = "powershell"
+                
             try:
-                if os.path.exists(startup_shortcut_path):
-                    os.remove(startup_shortcut_path)
+                if getattr(sys, 'frozen', False):
+                    powershell_cmd = f"""
+                    $w = New-Object -ComObject WScript.Shell
+                    $s = $w.CreateShortcut("{startup_shortcut_path}")
+                    $s.TargetPath = "{sys.executable}"
+                    $s.Description = "PingBro Reminder App"
+                    $s.WorkingDirectory = "{os.path.dirname(sys.executable)}"
+                    $s.IconLocation = "{sys.executable},0"
+                    $s.Save()
+                    """
+                else:
+                    pythonw_exe = os.path.join(sys.base_prefix, "pythonw.exe")
+                    if not os.path.exists(pythonw_exe):
+                        pythonw_exe = sys.executable
+                    main_py = os.path.abspath(sys.argv[0])
+                    install_dir = os.path.dirname(main_py)
+                    icon_ico = os.path.join(install_dir, "assets", "icon.ico")
+                    powershell_cmd = f"""
+                    $w = New-Object -ComObject WScript.Shell
+                    $s = $w.CreateShortcut("{startup_shortcut_path}")
+                    $s.TargetPath = "{pythonw_exe}"
+                    $s.Arguments = '"{main_py}"'
+                    $s.Description = "PingBro Reminder App"
+                    $s.WorkingDirectory = "{install_dir}"
+                    $s.IconLocation = "{icon_ico}"
+                    $s.Save()
+                    """
+                subprocess.run([powershell_exe, "-Command", powershell_cmd], capture_output=True, text=True, check=True)
                 return True
             except Exception as e:
-                print(f"[Startup] Error removing startup shortcut: {e}")
+                print(f"[Startup] Error creating startup shortcut: {e}")
                 return False
-                
-        system_root = os.environ.get("SystemRoot", "C:\\Windows")
-        powershell_exe = os.path.join(system_root, "System32", "WindowsPowerShell", "v1.0", "powershell.exe")
-        if not os.path.exists(powershell_exe):
-            powershell_exe = "powershell"
-            
-        try:
-            if getattr(sys, 'frozen', False):
-                powershell_cmd = f"""
-                $w = New-Object -ComObject WScript.Shell
-                $s = $w.CreateShortcut("{startup_shortcut_path}")
-                $s.TargetPath = "{sys.executable}"
-                $s.Description = "PingBro Reminder App"
-                $s.WorkingDirectory = "{os.path.dirname(sys.executable)}"
-                $s.IconLocation = "{sys.executable},0"
-                $s.Save()
-                """
-            else:
-                pythonw_exe = os.path.join(sys.base_prefix, "pythonw.exe")
-                if not os.path.exists(pythonw_exe):
-                    pythonw_exe = sys.executable
+        elif sys.platform.startswith('linux'):
+            autostart_dir = os.path.expanduser("~/.config/autostart")
+            autostart_file = os.path.join(autostart_dir, "pingbro.desktop")
+            if not enabled:
+                try:
+                    if os.path.exists(autostart_file):
+                        os.remove(autostart_file)
+                    return True
+                except Exception as e:
+                    print(f"[Startup] Error removing Linux autostart entry: {e}")
+                    return False
+            try:
+                os.makedirs(autostart_dir, exist_ok=True)
                 main_py = os.path.abspath(sys.argv[0])
-                install_dir = os.path.dirname(main_py)
-                icon_ico = os.path.join(install_dir, "assets", "icon.ico")
-                powershell_cmd = f"""
-                $w = New-Object -ComObject WScript.Shell
-                $s = $w.CreateShortcut("{startup_shortcut_path}")
-                $s.TargetPath = "{pythonw_exe}"
-                $s.Arguments = '"{main_py}"'
-                $s.Description = "PingBro Reminder App"
-                $s.WorkingDirectory = "{install_dir}"
-                $s.IconLocation = "{icon_ico}"
-                $s.Save()
-                """
-            subprocess.run([powershell_exe, "-Command", powershell_cmd], capture_output=True, text=True, check=True)
-            return True
-        except Exception as e:
-            print(f"[Startup] Error creating startup shortcut: {e}")
-            return False
+                project_dir = os.path.dirname(main_py)
+                venv_python = sys.executable
+                icon_path = os.path.join(project_dir, "assets", "icon.png")
+                
+                desktop_content = f"""[Desktop Entry]
+Name=PingBro
+Comment=A modern dark-themed notification and reminder client
+Exec={venv_python} {main_py}
+Path={project_dir}
+Icon={icon_path}
+Terminal=false
+Type=Application
+Categories=Utility;
+"""
+                with open(autostart_file, "w") as f:
+                    f.write(desktop_content)
+                os.chmod(autostart_file, 0o755)
+                return True
+            except Exception as e:
+                print(f"[Startup] Error creating Linux autostart entry: {e}")
+                return False
+        return False
 
     def toggle_silent_mode(self):
         val = self.silent_switch.get() == 1
