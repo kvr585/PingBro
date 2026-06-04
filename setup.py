@@ -261,7 +261,7 @@ class SetupWizard(ctk.CTk):
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                     stdin=subprocess.DEVNULL,
-                    creationflags=0x00000008 | 0x00000010
+                    creationflags=0x00000008
                 )
             except Exception:
                 pass
@@ -288,7 +288,7 @@ class SetupWizard(ctk.CTk):
         # Details
         details_lbl = ctk.CTkLabel(
             self.main_frame,
-            text="PingBro has been successfully installed, registered, and launched!\nYou can now find it running in your system tray.\nManage or uninstall it directly from your Windows Settings Apps list.",
+            text="PingBro has been successfully installed, registered, and launched!\nYou can now find it running in your system tray.\n(Note: You can safely delete the downloaded setup folder now as the app is fully installed.)\nManage or uninstall it directly from your Windows Settings Apps list.",
             font=("Helvetica", 12),
             text_color="#a0a0a5",
             justify="center"
