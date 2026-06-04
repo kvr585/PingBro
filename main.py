@@ -217,12 +217,21 @@ def run_uninstaller():
     import tempfile
 
 
-    # 2. Delete Startup registry value
+    # 2. Delete Startup registry value and Startup folder shortcut
     try:
         key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0, winreg.KEY_ALL_ACCESS)
         winreg.DeleteValue(key, "PingBro")
         winreg.CloseKey(key)
         print("[Uninstall] Removed startup registry key.")
+    except Exception:
+        pass
+    try:
+        startup_shortcut_path = os.path.join(
+            os.environ["APPDATA"], "Microsoft", "Windows", "Start Menu", "Programs", "Startup", "PingBro.lnk"
+        )
+        if os.path.exists(startup_shortcut_path):
+            os.remove(startup_shortcut_path)
+            print("[Uninstall] Removed startup folder shortcut.")
     except Exception:
         pass
 
@@ -330,24 +339,54 @@ def _main_impl():
 
     # Enable start on boot automatically by default if running on Windows and enabled
     if sys.platform.startswith('win'):
+        startup_shortcut_path = os.path.join(
+            os.environ["APPDATA"], "Microsoft", "Windows", "Start Menu", "Programs", "Startup", "PingBro.lnk"
+        )
         if settings.get("startup_enabled", True):
             try:
-                import winreg
-                key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
-                app_name = "PingBro"
+                def get_powershell_exe():
+                    system_root = os.environ.get("SystemRoot", "C:\\Windows")
+                    powershell_exe = os.path.join(system_root, "System32", "WindowsPowerShell", "v1.0", "powershell.exe")
+                    if os.path.exists(powershell_exe):
+                        return powershell_exe
+                    return "powershell"
+                
                 if getattr(sys, 'frozen', False):
-                    cmd = f'"{sys.executable}"'
+                    powershell_cmd = f"""
+                    $w = New-Object -ComObject WScript.Shell
+                    $s = $w.CreateShortcut("{startup_shortcut_path}")
+                    $s.TargetPath = "{sys.executable}"
+                    $s.Description = "PingBro Reminder App"
+                    $s.WorkingDirectory = "{os.path.dirname(sys.executable)}"
+                    $s.IconLocation = "{sys.executable},0"
+                    $s.Save()
+                    """
                 else:
-                    # Resolve system pythonw.exe path to run silently in background
                     pythonw_exe = os.path.join(sys.base_prefix, "pythonw.exe")
                     if not os.path.exists(pythonw_exe):
                         pythonw_exe = sys.executable
-                    cmd = f'"{pythonw_exe}" "{os.path.abspath(sys.argv[0])}"'
-                key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_ALL_ACCESS)
-                winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, cmd)
-                winreg.CloseKey(key)
+                    main_py = os.path.abspath(sys.argv[0])
+                    install_dir = os.path.dirname(main_py)
+                    icon_ico = os.path.join(install_dir, "assets", "icon.ico")
+                    powershell_cmd = f"""
+                    $w = New-Object -ComObject WScript.Shell
+                    $s = $w.CreateShortcut("{startup_shortcut_path}")
+                    $s.TargetPath = "{pythonw_exe}"
+                    $s.Arguments = '"{main_py}"'
+                    $s.Description = "PingBro Reminder App"
+                    $s.WorkingDirectory = "{install_dir}"
+                    $s.IconLocation = "{icon_ico}"
+                    $s.Save()
+                    """
+                subprocess.run([get_powershell_exe(), "-Command", powershell_cmd], capture_output=True, text=True, check=True)
             except Exception as e:
-                print(f"[Registry] Failed to auto-set registry startup key: {e}")
+                print(f"[Startup] Failed to create startup shortcut: {e}")
+        else:
+            try:
+                if os.path.exists(startup_shortcut_path):
+                    os.remove(startup_shortcut_path)
+            except Exception:
+                pass
 
     # 2. Setup visual alert trigger callback for the scheduler
     def scheduler_ui_dispatcher(title, message, mode, priority, is_water):

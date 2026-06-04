@@ -301,10 +301,37 @@ class SetupWizard(ctk.CTk):
             winreg.CloseKey(key)
 
             # 2. Register in Windows Startup (autostart by default)
-            run_key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
-            run_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, run_key_path, 0, winreg.KEY_ALL_ACCESS)
-            winreg.SetValueEx(run_key, "PingBro", 0, winreg.REG_SZ, startup_cmd)
-            winreg.CloseKey(run_key)
+            startup_shortcut_path = os.path.join(
+                os.environ["APPDATA"], "Microsoft", "Windows", "Start Menu", "Programs", "Startup", "PingBro.lnk"
+            )
+            try:
+                if getattr(sys, 'frozen', False):
+                    powershell_cmd = f"""
+                    $w = New-Object -ComObject WScript.Shell
+                    $s = $w.CreateShortcut("{startup_shortcut_path}")
+                    $s.TargetPath = "{self.target_exe}"
+                    $s.Description = "PingBro Reminder App"
+                    $s.WorkingDirectory = "{self.install_dir}"
+                    $s.IconLocation = "{self.target_exe},0"
+                    $s.Save()
+                    """
+                else:
+                    pythonw_exe = os.path.join(sys.base_prefix, "pythonw.exe")
+                    main_py = os.path.join(self.install_dir, "main.py")
+                    icon_ico = os.path.join(self.install_dir, "assets", "icon.ico")
+                    powershell_cmd = f"""
+                    $w = New-Object -ComObject WScript.Shell
+                    $s = $w.CreateShortcut("{startup_shortcut_path}")
+                    $s.TargetPath = "{pythonw_exe}"
+                    $s.Arguments = '"{main_py}"'
+                    $s.Description = "PingBro Reminder App"
+                    $s.WorkingDirectory = "{self.install_dir}"
+                    $s.IconLocation = "{icon_ico}"
+                    $s.Save()
+                    """
+                subprocess.run([get_powershell_exe(), "-Command", powershell_cmd], capture_output=True, text=True, check=True)
+            except Exception as e:
+                print(f"[Startup] Failed to create startup shortcut: {e}")
 
             self.prog_bar.set(1.0)
 

@@ -294,33 +294,56 @@ class SettingsView(ctk.CTkFrame):
             messagebox.showerror("Registry Error", "Failed to update Windows registry startup entry.")
 
     def _set_windows_registry_startup(self, enabled=True):
-        """Modifies HKCU registry settings to enable/disable start on startup."""
-        key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
-        app_name = "PingBro"
-        
-        # Form command line depending on script or exe
-        if getattr(sys, 'frozen', False):
-            cmd = f'"{sys.executable}"'
-        else:
-            # Standard python script launcher - resolve to pythonw.exe to run windowless
-            pythonw_exe = os.path.join(sys.base_prefix, "pythonw.exe")
-            if not os.path.exists(pythonw_exe):
-                pythonw_exe = sys.executable
-            cmd = f'"{pythonw_exe}" "{os.path.abspath(sys.argv[0])}"'
+        """Creates or removes a shortcut in the Windows Startup folder."""
+        startup_shortcut_path = os.path.join(
+            os.environ["APPDATA"], "Microsoft", "Windows", "Start Menu", "Programs", "Startup", "PingBro.lnk"
+        )
+        if not enabled:
+            try:
+                if os.path.exists(startup_shortcut_path):
+                    os.remove(startup_shortcut_path)
+                return True
+            except Exception as e:
+                print(f"[Startup] Error removing startup shortcut: {e}")
+                return False
+                
+        system_root = os.environ.get("SystemRoot", "C:\\Windows")
+        powershell_exe = os.path.join(system_root, "System32", "WindowsPowerShell", "v1.0", "powershell.exe")
+        if not os.path.exists(powershell_exe):
+            powershell_exe = "powershell"
             
         try:
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_ALL_ACCESS)
-            if enabled:
-                winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, cmd)
+            if getattr(sys, 'frozen', False):
+                powershell_cmd = f"""
+                $w = New-Object -ComObject WScript.Shell
+                $s = $w.CreateShortcut("{startup_shortcut_path}")
+                $s.TargetPath = "{sys.executable}"
+                $s.Description = "PingBro Reminder App"
+                $s.WorkingDirectory = "{os.path.dirname(sys.executable)}"
+                $s.IconLocation = "{sys.executable},0"
+                $s.Save()
+                """
             else:
-                try:
-                    winreg.DeleteValue(key, app_name)
-                except FileNotFoundError:
-                    pass
-            winreg.CloseKey(key)
+                pythonw_exe = os.path.join(sys.base_prefix, "pythonw.exe")
+                if not os.path.exists(pythonw_exe):
+                    pythonw_exe = sys.executable
+                main_py = os.path.abspath(sys.argv[0])
+                install_dir = os.path.dirname(main_py)
+                icon_ico = os.path.join(install_dir, "assets", "icon.ico")
+                powershell_cmd = f"""
+                $w = New-Object -ComObject WScript.Shell
+                $s = $w.CreateShortcut("{startup_shortcut_path}")
+                $s.TargetPath = "{pythonw_exe}"
+                $s.Arguments = '"{main_py}"'
+                $s.Description = "PingBro Reminder App"
+                $s.WorkingDirectory = "{install_dir}"
+                $s.IconLocation = "{icon_ico}"
+                $s.Save()
+                """
+            subprocess.run([powershell_exe, "-Command", powershell_cmd], capture_output=True, text=True, check=True)
             return True
         except Exception as e:
-            print(f"[Registry] Error writing registry key: {e}")
+            print(f"[Startup] Error creating startup shortcut: {e}")
             return False
 
     def toggle_silent_mode(self):
