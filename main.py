@@ -244,7 +244,7 @@ def run_uninstaller():
             f.write(f"""@echo off
 :loop
 taskkill /F /IM PingBro.exe >nul 2>&1
-powershell -Command "Get-CimInstance Win32_Process -Filter \\\"CommandLine LIKE '%%%%main.py%%%%'\\\" | Invoke-CimMethod -MethodName Terminate" >nul 2>&1
+powershell -Command "Get-CimInstance Win32_Process -Filter 'CommandLine LIKE ''%%%%main.py%%%%'' AND Name <> ''powershell.exe''' | Invoke-CimMethod -MethodName Terminate" >nul 2>&1
 del "{exe_path}" >nul 2>&1
 if exist "{exe_path}" (
     timeout /t 1 /nobreak >nul
