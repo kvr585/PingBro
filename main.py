@@ -54,6 +54,11 @@ class SingleInstanceLock:
             return True
         except OSError:
             # Fallback if binding fails (e.g. port is already in use by another program)
+            if sys.platform.startswith('win') and self.mutex:
+                # On Windows, if we successfully hold the mutex, we are the first instance.
+                # So we can safely ignore the socket bind failure and run anyway!
+                print("[Lock] Socket port in use. Running anyway as we hold the system mutex.")
+                return True
             self.notify_and_restore_existing()
             return False
 
@@ -103,6 +108,7 @@ class SingleInstanceLock:
 
 # Ensure working directory is the project root folder
 project_root = os.path.dirname(os.path.abspath(__file__))
+os.chdir(project_root)
 sys.path.insert(0, project_root)
 
 # If running via system python, inject local virtual environment site-packages
@@ -332,7 +338,11 @@ def _main_impl():
                 if getattr(sys, 'frozen', False):
                     cmd = f'"{sys.executable}"'
                 else:
-                    cmd = f'"{sys.executable}" "{os.path.abspath(sys.argv[0])}"'
+                    # Resolve system pythonw.exe path to run silently in background
+                    pythonw_exe = os.path.join(sys.base_prefix, "pythonw.exe")
+                    if not os.path.exists(pythonw_exe):
+                        pythonw_exe = sys.executable
+                    cmd = f'"{pythonw_exe}" "{os.path.abspath(sys.argv[0])}"'
                 key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_ALL_ACCESS)
                 winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, cmd)
                 winreg.CloseKey(key)

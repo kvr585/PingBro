@@ -302,8 +302,11 @@ class SettingsView(ctk.CTkFrame):
         if getattr(sys, 'frozen', False):
             cmd = f'"{sys.executable}"'
         else:
-            # Standard python script launcher
-            cmd = f'"{sys.executable}" "{os.path.abspath(sys.argv[0])}"'
+            # Standard python script launcher - resolve to pythonw.exe to run windowless
+            pythonw_exe = os.path.join(sys.base_prefix, "pythonw.exe")
+            if not os.path.exists(pythonw_exe):
+                pythonw_exe = sys.executable
+            cmd = f'"{pythonw_exe}" "{os.path.abspath(sys.argv[0])}"'
             
         try:
             key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_ALL_ACCESS)
