@@ -3,7 +3,6 @@ import sys
 import time
 import threading
 import socket
-import customtkinter as ctk
 
 class SingleInstanceLock:
     def __init__(self, port=58585):
@@ -111,13 +110,26 @@ venv_site_packages = os.path.join(project_root, ".venv", "Lib", "site-packages")
 if os.path.exists(venv_site_packages):
     sys.path.insert(0, venv_site_packages)
 
+import traceback
 
-from config.settings import SettingsManager
-from services.scheduler import ReminderScheduler
-from services.tray import TrayIconService
-from utils.hotkey import GlobalHotkeyListener
-from utils.logger import log_event
-from ui.main_window import MainWindow
+try:
+    import customtkinter as ctk
+    from config.settings import SettingsManager
+    from services.scheduler import ReminderScheduler
+    from services.tray import TrayIconService
+    from utils.hotkey import GlobalHotkeyListener
+    from utils.logger import log_event
+    from ui.main_window import MainWindow
+except Exception as e:
+    crash_log_path = os.path.join(project_root, "crash_log.txt")
+    try:
+        with open(crash_log_path, "w") as f:
+            f.write("PingBro Crash Log (Import stage)\n")
+            f.write("===============================\n\n")
+            traceback.print_exc(file=f)
+    except Exception:
+        pass
+    sys.exit(1)
 
 # Global references
 settings = None
@@ -276,6 +288,21 @@ if exist "{exe_to_check}" (
         print(f"[Uninstall] Failed to spawn cleanup script: {e}")
 
 def main():
+    try:
+        _main_impl()
+    except Exception as e:
+        project_root = os.path.dirname(os.path.abspath(__file__))
+        crash_log_path = os.path.join(project_root, "crash_log.txt")
+        try:
+            with open(crash_log_path, "w") as f:
+                f.write("PingBro Crash Log (Runtime stage)\n")
+                f.write("================================\n\n")
+                traceback.print_exc(file=f)
+        except Exception:
+            pass
+        sys.exit(1)
+
+def _main_impl():
     global settings, scheduler, hotkey, tray, window, lock
 
     # Check for uninstall command line flag
