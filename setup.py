@@ -3,6 +3,54 @@ import sys
 import shutil
 import subprocess
 import winreg
+
+# Bootstrap dependencies first!
+def bootstrap():
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    venv_dir = os.path.join(project_root, ".venv")
+    site_packages = os.path.join(venv_dir, "Lib", "site-packages")
+    
+    # Ensure site-packages directory exists
+    os.makedirs(site_packages, exist_ok=True)
+    
+    # Add it to sys.path immediately
+    sys.path.insert(0, site_packages)
+    
+    try:
+        import customtkinter as ctk
+        import pystray
+        import PIL
+        import plyer
+    except ImportError:
+        print("==========================================================")
+        print("   PingBro Setup: Preparing installation dependencies... ")
+        print("   Please wait, this will only take a moment.             ")
+        print("==========================================================")
+        print()
+        
+        req_file = os.path.join(project_root, "requirements.txt")
+        if not os.path.exists(req_file):
+            with open(req_file, "w") as f:
+                f.write("customtkinter>=5.2.0\npystray>=0.19.5\nPillow>=10.0.0\nplyer>=2.1.0\n")
+                
+        try:
+            cmd = [
+                sys.executable, "-m", "pip", "install", 
+                "--target", site_packages, 
+                "-r", req_file
+            ]
+            subprocess.run(cmd, check=True)
+            print()
+            print("Dependencies successfully installed!")
+            print("Launching Setup Wizard GUI...")
+            print()
+        except Exception as e:
+            print()
+            print(f"Error installing dependencies: {e}")
+            print("Attempting to run Setup Wizard anyway...")
+            print()
+
+bootstrap()
 import customtkinter as ctk
 
 class SetupWizard(ctk.CTk):
