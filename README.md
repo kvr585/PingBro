@@ -44,28 +44,50 @@ Located in the [aura_reminder_android](file:///c:/Users/uvave/Documents/auto_fla
 
 ## Installation & Running (Windows Desktop)
 
-### Prerequisites
-- Windows OS (Windows 10 or 11 recommended).
-- Python 3.8 or higher.
+### 🚀 Standard Setup (Quick & User-Friendly — No Terminal Required)
+For normal users who just want to run the application without installing Python or using the command line:
 
-### 1. Install Dependencies
-Open a Command Prompt or PowerShell in the root project folder and run:
-```bash
-pip install -r requirements.txt
-```
+1. **Download the App:**
+   - Click the green **Code** button at the top of this GitHub page and select **Download ZIP**.
+   - Save the ZIP file to your computer.
 
-### 2. Run the Application
-Start the client by running:
-```bash
-python main.py
-```
+2. **Extract Files:**
+   - Right-click the downloaded ZIP file and select **Extract All...**.
+   - Choose a permanent folder (like your `Documents` folder) and click **Extract**.
 
-### 3. Compile Standalone Executable
-To package the app into a standalone `PingBro.exe` file, run:
-```bash
-pyinstaller --clean PingBro.spec
-```
-The compiled binary will be generated inside the `dist` directory.
+3. **Run PingBro:**
+   - Open the extracted folder and double-click **`PingBro.exe`** to start the app!
+
+4. **📌 Create a Desktop Shortcut (Optional):**
+   - Right-click **`PingBro.exe`**, choose **Show more options** > **Create shortcut** (or **Send to** > **Desktop**).
+   - Rename the shortcut to just **"PingBro"** and drag it to your Desktop for quick access.
+
+5. **⚙️ Auto-Start on System Boot:**
+   - Open the app, go to the **⚙️ Settings** tab, and toggle **"Start application on Windows startup"** ON so it runs automatically in the background when you turn on your PC!
+
+---
+
+### 💻 Developer Setup (Running from Source Code)
+If you want to run the app using Python and modify the code:
+
+#### Prerequisites
+- Windows 10 or 11
+- Python 3.8+ installed
+
+#### Steps:
+1. Open Command Prompt/PowerShell in the folder and run:
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. Launch the application:
+   ```bash
+   python main.py
+   ```
+3. (Optional) Recompile the standalone executable:
+   ```bash
+   pyinstaller --clean PingBro.spec
+   ```
+   The compiled binary will be generated inside the `dist` directory.
 
 ---
 
