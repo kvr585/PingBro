@@ -1,6 +1,12 @@
 import os
 import sys
-import winreg
+
+IS_WINDOWS = sys.platform.startswith('win')
+if IS_WINDOWS:
+    import winreg
+else:
+    winreg = None
+
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
 from utils.logger import log_event
@@ -27,7 +33,8 @@ class SettingsView(ctk.CTkFrame):
         self.create_appearance_card()
         
         # 2. Startup and System Settings Card
-        self.create_system_card()
+        if IS_WINDOWS:
+            self.create_system_card()
         
         # 3. Sound Settings Card
         self.create_sound_card()

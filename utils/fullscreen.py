@@ -1,21 +1,29 @@
+import sys
 import ctypes
-from ctypes import wintypes
 
-user32 = ctypes.windll.user32
+IS_WINDOWS = sys.platform.startswith('win')
 
-# Configure the process to be DPI-aware so dimensions match physical pixels
-try:
-    user32.SetProcessDPIAware()
-except Exception:
-    pass
-
-class MONITORINFO(ctypes.Structure):
-    _fields_ = [
-        ("cbSize", wintypes.DWORD),
-        ("rcMonitor", wintypes.RECT),
-        ("rcWork", wintypes.RECT),
-        ("dwFlags", wintypes.DWORD)
-    ]
+if IS_WINDOWS:
+    from ctypes import wintypes
+    user32 = ctypes.windll.user32
+    
+    # Configure the process to be DPI-aware so dimensions match physical pixels
+    try:
+        user32.SetProcessDPIAware()
+    except Exception:
+        pass
+        
+    class MONITORINFO(ctypes.Structure):
+        _fields_ = [
+            ("cbSize", wintypes.DWORD),
+            ("rcMonitor", wintypes.RECT),
+            ("rcWork", wintypes.RECT),
+            ("dwFlags", wintypes.DWORD)
+        ]
+else:
+    wintypes = None
+    user32 = None
+    MONITORINFO = None
 
 def is_fullscreen_app_active():
     """
@@ -23,6 +31,9 @@ def is_fullscreen_app_active():
     is currently active on the system.
     Avoids false positives from desktop background and taskbar.
     """
+    if not IS_WINDOWS:
+        return False
+        
     hwnd = user32.GetForegroundWindow()
     if not hwnd:
         return False
@@ -74,6 +85,9 @@ def get_foreground_monitor_rect():
     Returns the monitor rectangle (left, top, width, height) that contains the
     current foreground window. Falls back to the primary monitor if detection fails.
     """
+    if not IS_WINDOWS:
+        return (0, 0, 1920, 1080)
+        
     hwnd = user32.GetForegroundWindow()
     if not hwnd:
         # Primary monitor
