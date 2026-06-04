@@ -12,10 +12,39 @@ class SingleInstanceLock:
         self.window = None
         self.thread = None
         self.running = False
+        self.mutex = None
 
     def acquire(self):
+        if sys.platform.startswith('win'):
+            try:
+                import ctypes
+                # Use a unique name for the system-wide mutex
+                self.mutex = ctypes.windll.kernel32.CreateMutexW(None, False, "PingBro_Singleton_Mutex")
+                last_error = ctypes.windll.kernel32.GetLastError()
+                if last_error == 183:  # ERROR_ALREADY_EXISTS
+                    # Another instance is running. Try clean socket notification first.
+                    socket_notified = False
+                    try:
+                        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        s.settimeout(0.5)
+                        s.connect(('127.0.0.1', self.port))
+                        s.sendall(b"restore")
+                        s.close()
+                        socket_notified = True
+                    except Exception:
+                        pass
+                    
+                    # If socket communication is blocked/failed, force restoration via Win32 API
+                    if not socket_notified:
+                        self.restore_existing_window_win32()
+                    return False
+            except Exception as e:
+                print(f"[Lock] Failed to acquire Win32 mutex: {e}. Falling back to socket lock.")
+
+        # Both Windows (first instance) and Linux should start the socket listener
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.socket.bind(('127.0.0.1', self.port))
             self.socket.listen(5)
             self.running = True
@@ -36,6 +65,17 @@ class SingleInstanceLock:
 
     def register_window(self, window):
         self.window = window
+
+    def restore_existing_window_win32(self):
+        try:
+            import ctypes
+            hwnd = ctypes.windll.user32.FindWindowW(None, "PingBro")
+            if hwnd:
+                # SW_RESTORE = 9
+                ctypes.windll.user32.ShowWindow(hwnd, 9)
+                ctypes.windll.user32.SetForegroundWindow(hwnd)
+        except Exception as e:
+            print(f"[Lock] Failed to restore window via Win32: {e}")
 
     def _listen(self):
         while self.running:
@@ -66,6 +106,7 @@ scheduler = None
 hotkey = None
 tray = None
 window = None
+lock = None
 
 def trigger_exam_mode():
     """Emergency shutdown: instantly terminates app, threads, and tray icon."""
@@ -128,7 +169,7 @@ def tray_resume_reminders():
     log_event("resume_activated", "Reminders resumed manually via system tray.")
 
 def main():
-    global settings, scheduler, hotkey, tray, window
+    global settings, scheduler, hotkey, tray, window, lock
 
     # Enforce single instance lock
     lock = SingleInstanceLock()
