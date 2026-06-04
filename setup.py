@@ -249,14 +249,20 @@ class SetupWizard(ctk.CTk):
             run_key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
             run_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, run_key_path, 0, winreg.KEY_ALL_ACCESS)
             winreg.SetValueEx(run_key, "PingBro", 0, winreg.REG_SZ, startup_cmd)
-            run_key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
             winreg.CloseKey(run_key)
 
             self.prog_bar.set(1.0)
 
             # Start the application immediately in the background
             try:
-                subprocess.Popen(launch_cmd, creationflags=0x00000008 | 0x00000010)
+                subprocess.Popen(
+                    launch_cmd,
+                    cwd=self.install_dir,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    stdin=subprocess.DEVNULL,
+                    creationflags=0x00000008 | 0x00000010
+                )
             except Exception:
                 pass
 
