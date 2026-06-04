@@ -31,7 +31,7 @@ python3 -m venv .venv
 
 # 3. Install PIP requirements
 echo "📥 Installing python packages..."
-.venv/bin/pip install -r requirements.txt
+.venv/bin/python3 -m pip install -r requirements.txt
 
 # 4. Run launcher script to register menu entry
 echo "🖥️ Registering application shortcut in system menu..."
