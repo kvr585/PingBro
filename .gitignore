@@ -49,8 +49,3 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# Compiled Binaries (Exclude main executable and setup wizard from git tracking to save space and prevent SAC blocks)
-PingBro.exe
-PingBroSetup.exe
-*.exe
-
