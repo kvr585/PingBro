@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Local settings and user logs
+config/*.json
+!config/__init__.py
+
+# PyInstaller Spec files (if you want to keep PingBro.spec, we can exclude generic ones, but let's exclude AuraReminder/HydraReminder if any are left)
+# We can allow spec files or ignore them. Let's keep PingBro.spec since it is needed to rebuild, but ignore build folders.
+
+# Flutter/Dart (Android folder)
+aura_reminder_android/
+*.log
+
+# Windows OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
