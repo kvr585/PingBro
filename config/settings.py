@@ -7,7 +7,7 @@ SETTINGS_FILE = get_data_path(os.path.join("config", "settings.json"))
 
 DEFAULT_SETTINGS = {
     "theme": "Dark",
-    "hydration_mode_enabled": True,  # Enabled by default, can be toggled in settings
+    "hydration_mode_enabled": False,  # Disabled by default, can be toggled in settings
     "hydration_target": 2000,          # ml
     "hydration_weight": 70,            # kg
     
@@ -20,7 +20,7 @@ DEFAULT_SETTINGS = {
             "trigger_type": "Interval",
             "time": "12:00",
             "interval_mins": 45,
-            "mode_type": "Notification",
+            "mode_type": "Fullscreen Popup",
             "priority": "medium",
             "enabled": True,
             "last_triggered_time": 0.0,
