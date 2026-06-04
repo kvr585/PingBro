@@ -45,25 +45,19 @@ Located in the [aura_reminder_android](file:///c:/Users/uvave/Documents/auto_fla
 ## Installation & Running (Windows Desktop)
 
 ### 🚀 Standard Setup (Quick & User-Friendly — No Terminal Required)
-For normal users who just want to run the application without installing Python or using the command line:
+For normal users who want a standard, clean installation:
 
-1. **Download the App:**
+1. **Download and Extract the App:**
    - Click the green **Code** button at the top of this GitHub page and select **Download ZIP**.
-   - Save the ZIP file to your computer.
+   - Right-click the downloaded ZIP file, select **Extract All...**, and extract it.
 
-2. **Extract Files:**
-   - Right-click the downloaded ZIP file and select **Extract All...**.
-   - Choose a permanent folder (like your `Documents` folder) and click **Extract**.
+2. **Run the Installer:**
+   - Open the extracted folder and double-click **`PingBroSetup.exe`**.
+   - Click **Install** in the wizard. It will automatically install PingBro to your local apps directory (`%LOCALAPPDATA%\PingBro`), register it in Windows, create a Start Menu shortcut, and launch the application!
 
-3. **Run PingBro:**
-   - Open the extracted folder and double-click **`PingBro.exe`** to start the app!
-
-4. **📌 Create a Desktop Shortcut (Optional):**
-   - Right-click **`PingBro.exe`**, choose **Show more options** > **Create shortcut** (or **Send to** > **Desktop**).
-   - Rename the shortcut to just **"PingBro"** and drag it to your Desktop for quick access.
-
-5. **⚙️ Auto-Start on System Boot:**
-   - Open the app, go to the **⚙️ Settings** tab, and toggle **"Start application on Windows startup"** ON so it runs automatically in the background when you turn on your PC!
+3. **❌ Uninstall cleanly at any time:**
+   - You can uninstall PingBro like any other app: Go to **Windows Settings > Apps > Installed apps**, search for **PingBro**, and click **Uninstall**.
+   - Alternatively, search for **PingBro** in your Start Menu, right-click, and select **Uninstall**!
 
 ---
 

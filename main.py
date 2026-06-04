@@ -181,8 +181,95 @@ def tray_resume_reminders():
     settings.set("active_pause_end", None)
     log_event("resume_activated", "Reminders resumed manually via system tray.")
 
+def run_uninstaller():
+    """Removes all installed assets, registry keys, and shortcuts for PingBro."""
+    if not sys.platform.startswith('win'):
+        print("[Uninstall] Uninstall option is only supported on Windows.")
+        return
+
+    print("[Uninstall] Running uninstaller...")
+    import winreg
+    import subprocess
+    import tempfile
+    
+    # 1. Close any other running instances of PingBro
+    try:
+        subprocess.run(["taskkill", "/F", "/IM", "PingBro.exe"], capture_output=True, text=True)
+    except Exception:
+        pass
+
+    # 2. Delete Startup registry value
+    try:
+        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0, winreg.KEY_ALL_ACCESS)
+        winreg.DeleteValue(key, "PingBro")
+        winreg.CloseKey(key)
+        print("[Uninstall] Removed startup registry key.")
+    except Exception:
+        pass
+
+    # 3. Delete Uninstall registry key
+    try:
+        winreg.DeleteKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Uninstall\PingBro")
+        print("[Uninstall] Removed uninstall entry from Windows Settings.")
+    except Exception:
+        pass
+
+    # 4. Delete Start Menu shortcut
+    try:
+        shortcut_path = os.path.join(os.environ["APPDATA"], "Microsoft", "Windows", "Start Menu", "Programs", "PingBro.lnk")
+        if os.path.exists(shortcut_path):
+            os.remove(shortcut_path)
+            print("[Uninstall] Removed Start Menu shortcut.")
+    except Exception as e:
+        print(f"[Uninstall] Failed to remove shortcut: {e}")
+
+    # 5. Show uninstallation success dialog
+    try:
+        import ctypes
+        ctypes.windll.user32.MessageBoxW(
+            None, 
+            "PingBro has been successfully uninstalled from your computer.", 
+            "PingBro Uninstallation", 
+            0x40 | 0x0  # MB_ICONINFORMATION | MB_OK
+        )
+    except Exception:
+        pass
+
+    # 6. Spawn self-deletion batch script in the temp directory and exit
+    try:
+        exe_path = sys.executable
+        install_dir = os.path.dirname(exe_path)
+        temp_dir = tempfile.gettempdir()
+        bat_path = os.path.join(temp_dir, "pingbro_cleanup.bat")
+        
+        # Only delete directory if folder name is exactly "PingBro" to prevent accidental deletion
+        is_safe_dir = os.path.basename(install_dir).lower() == "pingbro"
+        
+        with open(bat_path, "w") as f:
+            f.write(f"""@echo off
+:loop
+taskkill /F /IM PingBro.exe >nul 2>&1
+del "{exe_path}" >nul 2>&1
+if exist "{exe_path}" (
+    timeout /t 1 /nobreak >nul
+    goto loop
+)
+""")
+            if is_safe_dir:
+                f.write(f'rmdir /S /Q "{install_dir}" >nul 2>&1\n')
+            f.write('del "%~f0"\n')
+            
+        subprocess.Popen([bat_path], shell=True, creationflags=0x00000008 | 0x00000010)
+    except Exception as e:
+        print(f"[Uninstall] Failed to spawn cleanup script: {e}")
+
 def main():
     global settings, scheduler, hotkey, tray, window, lock
+
+    # Check for uninstall command line flag
+    if "--uninstall" in sys.argv:
+        run_uninstaller()
+        sys.exit(0)
 
     # Enforce single instance lock
     lock = SingleInstanceLock()
