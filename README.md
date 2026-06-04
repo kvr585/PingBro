@@ -5,7 +5,7 @@ A modern, sleek, dark-themed Windows desktop notification client designed to kee
 ---
 
 ## 🎥 Application Walkthrough
-<video src="PingBro.mp4" width="100%" controls></video>
+![Application Walkthrough](PingBro.mp4)
 
 *If the video player doesn't load, you can watch it here: [PingBro.mp4](PingBro.mp4)*
 
