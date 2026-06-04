@@ -238,7 +238,7 @@ class SetupWizard(ctk.CTk):
             key = winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_ALL_ACCESS)
             
             winreg.SetValueEx(key, "DisplayName", 0, winreg.REG_SZ, "PingBro")
-            winreg.SetValueEx(key, "DisplayVersion", 0, winreg.REG_SZ, "1.0.0")
+            winreg.SetValueEx(key, "DisplayVersion", 0, winreg.REG_SZ, "1.0.23")
             winreg.SetValueEx(key, "Publisher", 0, winreg.REG_SZ, "PingBro")
             winreg.SetValueEx(key, "DisplayIcon", 0, winreg.REG_SZ, display_icon)
             winreg.SetValueEx(key, "UninstallString", 0, winreg.REG_SZ, uninstall_string)

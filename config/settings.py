@@ -7,7 +7,7 @@ SETTINGS_FILE = get_data_path(os.path.join("config", "settings.json"))
 
 DEFAULT_SETTINGS = {
     "theme": "Dark",
-    "hydration_mode_enabled": False,  # Disabled by default, can be toggled in settings
+    "hydration_mode_enabled": True,  # Enabled by default, can be toggled in settings
     "hydration_target": 2000,          # ml
     "hydration_weight": 70,            # kg
     
@@ -15,6 +15,19 @@ DEFAULT_SETTINGS = {
     "reminders": [
         {
             "id": "r1",
+            "title": "Drink Water",
+            "message": "It's time to drink a glass of water and stay hydrated.",
+            "trigger_type": "Interval",
+            "time": "12:00",
+            "interval_mins": 45,
+            "mode_type": "Notification",
+            "priority": "medium",
+            "enabled": True,
+            "last_triggered_time": 0.0,
+            "last_triggered_date": ""
+        },
+        {
+            "id": "r2",
             "title": "Stretch Break",
             "message": "Stand up, stretch your arms, and take a deep breath.",
             "trigger_type": "Time of Day",  # Time of Day, Interval
@@ -27,7 +40,7 @@ DEFAULT_SETTINGS = {
             "last_triggered_date": ""
         },
         {
-            "id": "r2",
+            "id": "r3",
             "title": "Eye Rest (20-20-20 Rule)",
             "message": "Look at something 20 feet away for 20 seconds to reduce eye strain.",
             "trigger_type": "Interval",
