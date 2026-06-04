@@ -191,12 +191,7 @@ def run_uninstaller():
     import winreg
     import subprocess
     import tempfile
-    
-    # 1. Close any other running instances of PingBro
-    try:
-        subprocess.run(["taskkill", "/F", "/IM", "PingBro.exe"], capture_output=True, text=True)
-    except Exception:
-        pass
+
 
     # 2. Delete Startup registry value
     try:
