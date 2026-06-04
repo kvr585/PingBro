@@ -2,7 +2,52 @@ import os
 import sys
 import time
 import threading
+import socket
 import customtkinter as ctk
+
+class SingleInstanceLock:
+    def __init__(self, port=58585):
+        self.port = port
+        self.socket = None
+        self.window = None
+        self.thread = None
+        self.running = False
+
+    def acquire(self):
+        try:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.bind(('127.0.0.1', self.port))
+            self.socket.listen(5)
+            self.running = True
+            
+            self.thread = threading.Thread(target=self._listen, daemon=True)
+            self.thread.start()
+            return True
+        except OSError:
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(1.0)
+                s.connect(('127.0.0.1', self.port))
+                s.sendall(b"restore")
+                s.close()
+            except Exception:
+                pass
+            return False
+
+    def register_window(self, window):
+        self.window = window
+
+    def _listen(self):
+        while self.running:
+            try:
+                conn, addr = self.socket.accept()
+                data = conn.recv(1024)
+                if data == b"restore":
+                    if self.window:
+                        self.window.after(0, self.window.restore_from_tray)
+                conn.close()
+            except Exception:
+                break
 
 # Ensure working directory is the project root folder
 project_root = os.path.dirname(os.path.abspath(__file__))
@@ -85,6 +130,12 @@ def tray_resume_reminders():
 def main():
     global settings, scheduler, hotkey, tray, window
 
+    # Enforce single instance lock
+    lock = SingleInstanceLock()
+    if not lock.acquire():
+        print("[Startup] PingBro is already running. Restoring active window and exiting.")
+        sys.exit(0)
+
     print("[Startup] Launching PingBro...")
     log_event("app_started", "PingBro application started.")
 
@@ -145,6 +196,7 @@ def main():
         exam_mode_handler=trigger_exam_mode,
         exit_handler=trigger_safe_exit
     )
+    lock.register_window(window)
 
     # Begin the GUI event loop
     try:
