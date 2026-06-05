@@ -203,6 +203,23 @@ class SetupWizard(ctk.CTk):
                 except Exception:
                     pass
 
+                # Delete old compiled PingBro.exe if it exists in install_dir
+                old_exe = os.path.join(self.install_dir, "PingBro.exe")
+                if os.path.exists(old_exe):
+                    try:
+                        os.remove(old_exe)
+                    except Exception as e:
+                        print(f"[Setup] Warning: Could not remove old PingBro.exe: {e}")
+
+                # Clean up old Registry Run key if it exists
+                try:
+                    import winreg
+                    key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0, winreg.KEY_ALL_ACCESS)
+                    winreg.DeleteValue(key, "PingBro")
+                    winreg.CloseKey(key)
+                except Exception:
+                    pass
+
                 folders_to_copy = ["config", "services", "ui", "utils", "reminders", "assets", ".venv"]
                 files_to_copy = ["main.py"]
                 

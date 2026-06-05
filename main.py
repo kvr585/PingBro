@@ -342,6 +342,15 @@ def _main_impl():
         startup_shortcut_path = os.path.join(
             os.environ["APPDATA"], "Microsoft", "Windows", "Start Menu", "Programs", "Startup", "PingBro.lnk"
         )
+        # Clean up old Registry Run key if it exists to prevent double-starts or old file launches
+        try:
+            import winreg
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0, winreg.KEY_ALL_ACCESS)
+            winreg.DeleteValue(key, "PingBro")
+            winreg.CloseKey(key)
+        except Exception:
+            pass
+
         if settings.get("startup_enabled", True):
             try:
                 def get_powershell_exe():
